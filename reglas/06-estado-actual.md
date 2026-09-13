@@ -68,8 +68,9 @@
 - [x] **Fase 1 (validación de fuentes)** — cerrada y commiteada (`e72fd4c`).
       Las 5 fuentes candidatas confirmadas en `tests/`.
 - [x] **Fase 2 (diseño de esquema)** — cerrada y commiteada (`6baaba1`,
-      `48d9ba6`). 8 tablas en `schemas/*.sql`, aplicadas contra el Lakebase
-      real con `schemas/apply_schema.py` (OAuth M2M, sin password estática).
+      `48d9ba6`). 7 tablas (8 archivos SQL contando `00_extensions.sql`)
+      en `schemas/*.sql`, aplicadas contra el Lakebase real con
+      `schemas/apply_schema.py` (OAuth M2M, sin password estática).
 - [x] **Fase 3 (infra Terraform)** — quedó resuelta de hecho dentro de la
       Fase 0 de la sesión 3 (mismo Terraform sirvió para levantar
       proyecto/branch/endpoint). No hay un commit separado de "Fase 3" — no

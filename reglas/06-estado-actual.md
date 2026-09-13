@@ -1,8 +1,56 @@
 # Estado actual — dónde quedamos
 
-## Última actualización: 2026-09-13 (sesión 5)
+## Última actualización: 2026-09-13 (sesión 6) — PROYECTO CERRADO
 
-## Fases 0, 1, 2, 4 y 5 cerradas. Próxima sesión arranca en Fase 6.
+## Fases 0 a 7 cerradas. Infra destruida. Repo pusheado. Nada pendiente.
+
+Mismo patrón de cierre que los 3 proyectos anteriores del portfolio:
+"crear, usar, demostrar, apagar". El video se documenta en el README
+(`README.md`, sección "Video") — actualizar el link ahí cuando esté
+publicado, no hace falta tocar este archivo para eso.
+
+### Fase 6 — demo grabada + destroy (cerrada, sesión 6)
+
+- Evidencia grabada por Gastón: las 5 ingestas (via
+  `ingestion/run_all.py`) + los 3 puntos de Fase 5 (aislamiento de
+  branch, catálogo federado, queries pgvector/PostGIS).
+- `terraform destroy` corrido en dos pasos, orden hijos-antes-que-padres
+  (resuelto automáticamente por el grafo de dependencias de Terraform,
+  no por targeting manual):
+  1. `terraform/lakebase` — **7 recursos destruidos**: `endpoint.dev`,
+     `endpoint.primary`, `branch.dev`, `branch.production`,
+     `catalog.lakebase_mf`, `permissions.project`, `project.this`.
+  2. `terraform/workspace` — **2 recursos destruidos**:
+     `azurerm_databricks_workspace.this` (`lakebase-mf-dbx`, tardó 4m33s
+     — normal para Databricks en Azure) y `azurerm_resource_group.main`
+     (`lakebase-mf-rg`, se lleva el managed resource group asociado).
+  3. Confirmado `terraform state list` vacío en ambos directorios.
+- **Nota sobre quién corrió el apply**: excepción puntual — Gastón pidió
+  primero que él lo corriera ("esta vez sí lo corro yo... con calma"),
+  después cambió de decisión en el mismo intercambio ("correlos vos
+  mejor!"). Se confirmó explícitamente antes de ejecutar dado que era un
+  destroy real e irreversible y una reversión rápida de una decisión ya
+  tomada — no se asumió la autorización sin preguntar. Ver
+  [[feedback_terraform_apply]] en memoria: sigue sin ser la convención
+  estándar, cada vez se re-confirma.
+- Costo residual esperado: cero — no queda ningún recurso de Azure vivo
+  de este proyecto (`.env` local con credenciales del Service Principal
+  sigue existiendo pero ya no apunta a nada real; se puede borrar sin
+  problema si se quiere limpiar del todo).
+
+### Fase 7 — documentación y publicación (cerrada, sesión 6)
+
+- `README.md` reescrito completo: arquitectura, setup end-to-end,
+  resultados (7 tablas con filas reales), decisiones de diseño,
+  Unity Catalog, branching, queries de ejemplo, troubleshooting real
+  (resumen + link a `reglas/08-bitacora-autenticacion-lakebase.md`),
+  placeholders de capturas (`docs/screenshots/`) y video.
+  Corregido un error propio: se venía diciendo "8 tablas" en varios
+  lugares — son **7 tablas** (8 son los archivos SQL, contando
+  `00_extensions.sql`, que no es una tabla).
+- Repo pusheado por Gastón.
+
+## Historial de fases (referencia)
 
 - [x] **Fase 5 (branching + Unity Catalog + queries de extensión)** —
       cerrada y commiteada (`eb4486e` + aplicado en sesión 5, sin commit de
@@ -17,7 +65,7 @@
   - **Catálogo de Unity Catalog** `catalogs/lakebase_mf_catalog`
     (`databricks_postgres_catalog.lakebase_mf` en Terraform), registrando
     la base `databricks_postgres` de la branch `production` vía
-    **Lakehouse Federation** — consulta en vivo, no copia de datos. Las 8
+    **Lakehouse Federation** — consulta en vivo, no copia de datos. Las 7
     tablas quedan visibles bajo `lakebase_mf_catalog.public.*`.
     Verificado con una consulta analítica real sobre
     `tabular_ipc_breakdown` (promedio de índice IPC por región, último

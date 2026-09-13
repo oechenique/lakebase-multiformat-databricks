@@ -10,6 +10,7 @@ trabajo.
 
 ## Estado
 
-En construcción — Fase 0 (setup) y Fase 1 (validación de fuentes) cerradas.
-Arrancando Fase 2 (diseño de esquema). Ver `reglas/06-estado-actual.md` para
-el detalle completo.
+En construcción — Fases 0 a 4 cerradas: infra Lakebase viva, esquema
+diseñado y aplicado (8 tablas), y las 5 fuentes ingestadas de punta a
+punta. Arrancando Fase 5 (branching + sync a Unity Catalog). Ver
+`reglas/06-estado-actual.md` para el detalle completo.

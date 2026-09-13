@@ -40,6 +40,12 @@ variable "endpoint_suspend_timeout" {
   default     = "300s"
 }
 
+variable "dev_branch_ttl" {
+  description = "Duracion de vida de la branch de desarrollo de Fase 5 (formato Go duration, ej. '48h'). Expira sola aunque nos olvidemos de destruirla a mano en Fase 6."
+  type        = string
+  default     = "48h"
+}
+
 variable "purge_on_delete" {
   description = "true = borrado permanente inmediato al destruir (sin retencion de 7 dias). Portfolio project de 'crear, mostrar, apagar' (ver reglas/00-overview.md) - no necesitamos la ventana de recuperacion."
   type        = bool

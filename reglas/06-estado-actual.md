@@ -1,8 +1,66 @@
 # Estado actual — dónde quedamos
 
-## Última actualización: 2026-09-13 (sesión 4)
+## Última actualización: 2026-09-13 (sesión 5)
 
-## Fases 0, 1, 2 y 4 cerradas. Próxima sesión arranca en Fase 5.
+## Fases 0, 1, 2, 4 y 5 cerradas. Próxima sesión arranca en Fase 6.
+
+- [x] **Fase 5 (branching + Unity Catalog + queries de extensión)** —
+      cerrada y commiteada (`eb4486e` + aplicado en sesión 5, sin commit de
+      código adicional para el punto 2/3 ya que solo fue infra + queries).
+  - **Branch `dev`** (`projects/lakebase-mf-project/branches/dev`, fork
+    copy-on-write de `production`, `ttl = "48h"`) + su endpoint
+    `primary` (host `ep-dawn-firefly-e15fdr0a.database.eastus2.azuredatabricks.net`).
+    Aislamiento demostrado insertando una fila marcada
+    (`guid = 'fase5-branch-isolation-test'`) en `xml_rss_items` en `dev`
+    (23→24 filas) y confirmando que `production` se mantuvo en 23 filas
+    sin la fila marcada.
+  - **Catálogo de Unity Catalog** `catalogs/lakebase_mf_catalog`
+    (`databricks_postgres_catalog.lakebase_mf` en Terraform), registrando
+    la base `databricks_postgres` de la branch `production` vía
+    **Lakehouse Federation** — consulta en vivo, no copia de datos. Las 8
+    tablas quedan visibles bajo `lakebase_mf_catalog.public.*`.
+    Verificado con una consulta analítica real sobre
+    `tabular_ipc_breakdown` (promedio de índice IPC por región, último
+    mes) corrida vía Databricks SQL Statement Execution API contra el
+    "Serverless Starter Warehouse" ya existente en el workspace.
+  - **Corrección importante a `reglas/03-conceptos-oltp-postgres.md`**:
+    el puente OLTP→OLAP de Lakebase NO es CDC hacia una copia Delta como
+    se asumía originalmente — `databricks_postgres_synced_table` de hecho
+    sincroniza en la dirección contraria (Unity Catalog Delta → Postgres,
+    para servirle datos analíticos ya materializados a una app OLTP). El
+    mecanismo real y correcto es `databricks_postgres_catalog`
+    (Lakehouse Federation).
+  - Query pgvector (mejorada de Fase 4): top-3 vecinos por similitud
+    coseno del chunk 5 de `embeddings_text_chunks` (similitudes
+    0.7865/0.7238/0.7223).
+  - Query PostGIS (mejorada de Fase 4): cafés a menos de 400m del
+    Obelisco vía `ST_DWithin`/`ST_Distance` sobre `geo_osm_points` (4
+    resultados, 131.8m–236.3m).
+  - **Gotchas nuevos de esta fase, por si hace falta re-derivarlos**:
+    - Una branch nueva (fork) auto-provisiona su propio endpoint
+      `primary` implícito, igual que `production` en Fase 0 — hay que
+      adoptarlo con `endpoint_id = "primary"` + `replace_existing = true`
+      en vez de crear un endpoint con otro id (error real visto:
+      `read_write endpoint already exists`).
+    - `databricks_postgres_branch` para una branch que NO es la raíz del
+      proyecto requiere expiración explícita en `spec` (`ttl`,
+      `expire_time` o `no_expiry`) — la API rechaza la creación sin uno
+      de los tres.
+    - `databricks_postgres_catalog` requiere el privilegio `CREATE
+      CATALOG` sobre el metastore de la cuenta. El Service Principal del
+      proyecto (auth OAuth M2M de siempre) **no tiene ningún acceso al
+      metastore por default, ni siquiera lectura** — no puede
+      auto-otorgarse el permiso por Terraform. Lo resolvió Gastón a mano
+      con `GRANT CREATE CATALOG ON METASTORE TO`
+      `` `8dc75b14-ab3b-49bc-a4b0-b88868c24d3b`; `` corrido como admin de
+      cuenta en un SQL Editor — permiso de cuenta de una sola vez, no
+      vale la pena resolverlo por Terraform con un segundo `provider`
+      block solo para esto.
+    - `terraform apply <planfile>` con un plan guardado (`-out=...`)
+      queda "stale" apenas se corre cualquier otro `plan`/`refresh` de
+      por medio (bump del serial del state) — más simple correr
+      `terraform apply` directo (sin plan file) cuando plan y apply van a
+      pasar en pasos separados de todos modos.
 
 - [x] **Fase 0 (setup + infra)** — cerrada y commiteada (`795a848`). Lakebase
       vivo: `databricks_postgres_project` → `_branch` (`production`) →
@@ -81,8 +139,14 @@ set -a && source .env && set +a && .venv/Scripts/python <script>.py
 
 ## Qué falta
 
-1. **Fase 5** (`04-plan-de-trabajo.md`): crear una branch de desarrollo
-   (copy-on-write), sincronizar al menos una tabla a Unity Catalog, y una
-   consulta de ejemplo por extensión (ya tenemos las de verificación de
-   Fase 4 como base — similitud vectorial y distancia PostGIS).
-2. Nada bloqueado. Toda la infra y el dato real ya están en Lakebase.
+1. **Fase 6** (`04-plan-de-trabajo.md`): grabar evidencia de las 5
+   ingestas + las features de Fase 5 (aislamiento de branch, catálogo UC,
+   ambas queries), y después `terraform destroy` en el orden correcto.
+   **Ojo**: la branch `dev` está protegida contra recreación accidental
+   por Terraform gracias al `ttl = "48h"` (expira sola), pero el destroy
+   normal de Terraform la borra igual sin esperar el TTL - no hace falta
+   ningún paso especial para ella en el destroy, a diferencia de la
+   branch `production` en la guía oficial (que usa `is_protected = true`,
+   algo que este proyecto nunca activó).
+2. Nada bloqueado. Toda la infra, el dato real, la branch dev y el
+   catálogo UC ya están en Lakebase.

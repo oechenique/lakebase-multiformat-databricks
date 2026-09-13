@@ -10,7 +10,9 @@ trabajo.
 
 ## Estado
 
-En construcción — Fases 0 a 4 cerradas: infra Lakebase viva, esquema
-diseñado y aplicado (8 tablas), y las 5 fuentes ingestadas de punta a
-punta. Arrancando Fase 5 (branching + sync a Unity Catalog). Ver
-`reglas/06-estado-actual.md` para el detalle completo.
+En construcción — Fases 0 a 5 cerradas: infra Lakebase viva, esquema
+diseñado y aplicado (8 tablas), las 5 fuentes ingestadas de punta a
+punta, branch de desarrollo copy-on-write demostrada, y las tablas
+consultables desde Unity Catalog vía Lakehouse Federation. Arrancando
+Fase 6 (demo grabada + destroy). Ver `reglas/06-estado-actual.md` para el
+detalle completo.

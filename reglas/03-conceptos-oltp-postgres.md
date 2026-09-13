@@ -42,12 +42,22 @@ es la feature que más diferencia a Lakebase de "un RDS cualquiera".
 
 ## Sincronización a Unity Catalog — el puente OLTP → OLAP
 
-Lo que se escribe en Lakebase puede sincronizarse (vía CDC, change data
-capture) hacia tablas Delta en Unity Catalog, quedando disponible para
-análisis sin ETL manual. Esto es un buen cierre de demo: mostrar que un dato
-que entró por el lado transaccional (Lakebase) también aparece consultable
-del lado analítico (Delta/Unity Catalog) — es literalmente la promesa de
-"un solo modelo de gobierno para OLTP y OLAP".
+**Corrección (confirmada en Fase 5 contra la documentación oficial y la
+API real)**: el mecanismo NO es CDC hacia una copia materializada en
+Delta como se asumía originalmente en este archivo.
+`databricks_postgres_synced_table` existe, pero sincroniza en la
+dirección **contraria** (Unity Catalog Delta → Postgres, vía Change Data
+Feed, para servirle datos analíticos ya materializados a una app OLTP) —
+no sirve para este caso de uso.
+
+El puente real OLTP → OLAP es **`databricks_postgres_catalog`**
+(Lakehouse Federation): registra la base de Postgres directamente como un
+catálogo de Unity Catalog, y las tablas quedan consultables **en vivo**
+desde Databricks SQL/notebooks sin copiar ni mover los datos. Esto es un
+buen cierre de demo igual: mostrar que un dato que entró por el lado
+transaccional (Lakebase) también aparece consultable del lado analítico
+(Unity Catalog) — es la misma promesa de "un solo modelo de gobierno para
+OLTP y OLAP", solo que vía federación en vez de una copia física.
 
 ## Checklist de autoevaluación
 
